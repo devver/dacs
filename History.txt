@@ -1,0 +1,10 @@
+== 0.2.0 2010-01-13
+   * Major enhancements
+     * Added new mini-DSL for defining known configuration keys
+     * AppConfig now knows where each configured value came from
+       (default, file, or environment)
+     * Init will generate a starter config file if one doesn't exist
+     
+  * Minor enhancements
+    * Warns when unknown keys are encountered
+    * Checks config file for sanity
