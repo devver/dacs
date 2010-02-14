@@ -117,6 +117,7 @@ module Dacs
     context "with explicit key definitions" do
       before :each do
         ENV['FOO_APP_BAR'] = 'env_bar'
+        @def_line = __LINE__ + 1
         AppConfig.init!(@app_name, :logger => @logger) do |config|
           config.key :foo, :default => 42
           config.key 'bar'
@@ -145,6 +146,25 @@ module Dacs
         AppConfig.optional?(:foo).should be_true
       end
 
+      it "should raise an exception when an undefined key is referenced" do
+        lambda do
+          AppConfig['faz']
+        end.should raise_error(ConfigurationError)
+      end
+
+      it "should reference the offending line when an undefined key is referenced" do
+        @error_line = __LINE__ + 2
+        error = begin
+                  AppConfig['faz']
+                rescue ConfigurationError => error
+                  error
+                end
+        error.backtrace[0].should match(/#{__FILE__}:#{@error_line}/)
+      end
+
+      it "should remember where the keys were defined" do
+        AppConfig.definition_location.should match(/#{__FILE__}:#{@def_line}/)
+      end
     end
 
     context "with a mix of default, file, and environment settings" do

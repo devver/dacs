@@ -1,7 +1,7 @@
 module Dacs
   class EnvironmentSource
-    def initialize(app_name, environment=ENV)
-      @app_name    = app_name.to_s.downcase
+    def initialize(prefix, environment=ENV)
+      @prefix      = prefix
       @environment = environment
     end
     
@@ -11,7 +11,7 @@ module Dacs
 
     def each
       @environment.each_pair do |key, value|
-        if match = /^#{@app_name}_(.*)$/.match(key.downcase)
+        if match = /^#{@prefix.downcase}(.*)$/.match(key.downcase)
           yield ConfiguredValue.new(self, match[1], value)
         end
       end

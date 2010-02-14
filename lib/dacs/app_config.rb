@@ -41,7 +41,7 @@ module Dacs
 
       # Delegate a subset of Hash methods to the singleton instance
       def_delegators :instance, :[], :fetch, :key?, :merge, :merge!, :app_name,
-                                :source, :dump
+                                :source, :dump, :report
 
       def_delegators :schema, :required?, :optional?, :keys, :default_value
     end
@@ -64,6 +64,7 @@ module Dacs
       @@options[:logger]       ||= ::Logger.new($stderr)
       @@options[:environment]  ||= :development
       @@options[:defaults]     ||= {}
+      @@definition_location    = caller[0]
       if block_given?
         schema = Schema.new
         yield(schema)
@@ -85,6 +86,10 @@ module Dacs
     def self.environment
       @@options[:environment]
     end
+
+    def self.definition_location
+      @@definition_location
+    end
     
     attr_reader :app_name
     attr_reader :logger
@@ -103,10 +108,18 @@ module Dacs
 
       defaults_source = DefaultSource.new(@defaults)
       file_source     = FileSource.new(config_path, @environment)
-      env_source      = EnvironmentSource.new(@app_name)
+      env_source      = EnvironmentSource.new(env_var_prefix)
 
       load_values!(self.class.schema, env_source, file_source, defaults_source)
       verify_no_missing_required_values!
+    end
+
+    def definition_location
+      self.class.definition_location
+    end
+
+    def env_var_prefix
+      app_name.to_s.upcase + "_"
     end
 
     def source(key)
@@ -117,10 +130,12 @@ module Dacs
     end
 
     def [](key)
+      assert_key_defined!(key)
       super(key).value
     end
 
     def fetch(key, &block)
+      assert_key_defined!(key)
       case result = super(key, &block)
       when ConfiguredValue then result.value
       else result
@@ -133,6 +148,17 @@ module Dacs
         table << [key, configured_value.value, configured_value.source.to_s]
       end
       table.as(:text)
+    end
+
+    def report
+      text = ""
+      text << "%-22s%s\n" % ["App name:",           app_name]
+      text << "%-22s%s\n" % ["Environment:",        environment]
+      text << "%-22s%s\n" % ["Configuration file:", config_path]
+      text << "%-22s%s\n" % ["Configuration setup:", definition_location]
+      text << "%-22s%s\n" % ["Env var prefix:", env_var_prefix]
+      text << dump
+      text
     end
 
     def verify_no_missing_required_values!
@@ -152,6 +178,12 @@ module Dacs
     end
 
     private
+
+    def assert_key_defined!(key)
+      unless schema.defined?(key.to_s)
+        raise UndefinedKeyError, key, caller(3)
+      end
+    end
 
     def schema
       self.class.schema
