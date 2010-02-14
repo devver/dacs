@@ -1,3 +1,10 @@
+== 0.2.0 2010-01-14
+   * Minor enhancements
+     * When an explicit schema is defined (using DSL):
+       * Will warn and exit when required keys are not configured
+       * Will raise an error when an undefined key is referenced
+     * New #report method added to dump a full configuration report
+
 == 0.2.0 2010-01-13
    * Major enhancements
      * Added new mini-DSL for defining known configuration keys
