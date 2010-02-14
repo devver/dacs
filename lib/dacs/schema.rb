@@ -39,7 +39,7 @@ module Dacs
     private
 
     def assert_key_defined!(key)
-      !!key_def(key) or raise ConfigurationError, "No configuration key '#{key}' is defined"
+      !!key_def(key) or raise UndefinedKeyError, key
     end
 
     def key_defs

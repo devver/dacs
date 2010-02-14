@@ -123,9 +123,7 @@ module Dacs
     end
 
     def source(key)
-      configured_value = Hash.instance_method(:fetch).bind(self).call(key.to_s) do
-        raise ConfigurationError, "No such key '#{key}'"
-      end
+      assert_key_defined!(key)
       configured_value.source.to_s
     end
 
