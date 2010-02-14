@@ -31,7 +31,7 @@ module Dacs
 
     def defaults
       key_defs.inject({}) { |h, key_def|
-        h[key_def[:name]] = key_def[:default]
+        h[key_def[:name]] = key_def[:default] if key_def.key?(:default)
         h
       }
     end

@@ -59,6 +59,31 @@ module Dacs
       end
     end
 
+    context "given strict definitions and a missing required key" do
+      before :each do
+        @system = stub("system").as_null_object
+      end
+
+      def do_init
+        AppConfig.init!(@app_name, :logger => @logger, :system => @system) do |config|
+          config.key "foo"
+          config.key "bar"
+        end
+      end
+      
+      it "should exit the program with an error status" do
+        @system.should_receive(:exit).with(1)
+        do_init
+      end
+
+      it "should warn the user about the missing config keys" do
+        @system.should_receive(:warn).with(/foo/)
+        @system.should_receive(:warn).with(/bar/)
+        @system.should_receive(:warn).any_number_of_times
+        do_init
+      end
+    end
+
     context "without explicit key definitions" do
       before :each do
         AppConfig.init!(@app_name, 
@@ -91,10 +116,15 @@ module Dacs
 
     context "with explicit key definitions" do
       before :each do
+        ENV['FOO_APP_BAR'] = 'env_bar'
         AppConfig.init!(@app_name, :logger => @logger) do |config|
           config.key :foo, :default => 42
           config.key 'bar'
         end
+      end
+
+      after :each do
+        ENV.delete('FOO_APP_BAR')
       end
 
       it "should be able to list known keys" do
@@ -134,6 +164,10 @@ module Dacs
           config.key 'bar', :default => "baz"
           config.key 'buz', :default => "ribbit"
         end
+      end
+
+      after :each do
+        ENV.delete('FOO_APP_BUZ')
       end
 
       it "should have the correct values for each" do

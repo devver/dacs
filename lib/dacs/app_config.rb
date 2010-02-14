@@ -98,6 +98,7 @@ module Dacs
       @logger       = @@options[:logger]
       @environment  = @@options[:environment]
       @defaults     = self.class.schema.defaults 
+      @system       = @@options.fetch(:system){Kernel}
       find_or_create_config_file!
 
       defaults_source = DefaultSource.new(@defaults)
@@ -105,6 +106,7 @@ module Dacs
       env_source      = EnvironmentSource.new(@app_name)
 
       load_values!(self.class.schema, env_source, file_source, defaults_source)
+      verify_no_missing_required_values!
     end
 
     def source(key)
@@ -133,7 +135,27 @@ module Dacs
       table.as(:text)
     end
 
+    def verify_no_missing_required_values!
+      missing_keys = schema.keys - keys
+      missing_required_keys = missing_keys.select{|k| schema.required?(k)}
+      unless missing_required_keys.empty?
+        logger.fatal "Application not configured; exiting"
+        @system.warn "These required configuration keys were missing:"
+        missing_required_keys.each do |key|
+          @system.warn "    #{key}"
+        end
+        @system.warn ""
+        @system.warn "Please set the required keys in #{config_path} or "\
+          "environment and try again."
+        @system.exit(1)
+      end
+    end
+
     private
+
+    def schema
+      self.class.schema
+    end
 
     def find_or_create_config_file!
       if Pathname(config_path).exist?
@@ -174,8 +196,8 @@ END
     def load_values!(schema, *sources)
       sources.reverse_each do |source|
         source.each do |configured_value|
-          if schema.defined?(configured_value.key)
-            self[configured_value.key] = configured_value
+          if schema.defined?(configured_value.key.to_s)
+            self[configured_value.key.to_s] = configured_value
           else
             key = configured_value.key
             logger.warn "Unknown configuration key '#{key}' in #{source}"
