@@ -1,8 +1,13 @@
 require 'pathname'
 require 'yaml'
+require 'forwardable'
 
 module Dacs
   class FileSource
+    extend Forwardable
+    
+    def_delegators :@path, :readable?, :exist?
+
     def initialize(config_path, environment)
       @path        = Pathname(config_path)
       @environment = environment.to_s

@@ -28,6 +28,38 @@ module Dacs
       end
     end
 
+    def self.it_should_not_choke_on_file_source
+      it "should not write an example config file" do
+        AppConfig.init!(@app_name, :logger => @logger)
+        AppConfig.instance
+        (@construct+'config'+'foo_app.yml').should_not exist
+      end
+
+      it "should not raise an error" do
+        lambda do 
+          AppConfig.init!(@app_name, :logger => @logger)
+          AppConfig.instance
+        end.should_not raise_error
+      end
+    end
+
+    context "when first initialized in a read-only filesystem" do
+      before do
+        @construct.chmod(0444)
+      end
+      
+      it_should_not_choke_on_file_source
+    end
+
+    context "when first initialized with a read-only config dir" do
+      before do
+        config_dir = @construct.directory 'config'
+        config_dir.chmod(0444)
+      end
+      
+      it_should_not_choke_on_file_source
+    end
+
     context "given a config file lacking the expected environment key" do
       append_before :each do
         @construct.file("config/foo_app.yml") do |f|
@@ -173,7 +205,7 @@ module Dacs
           YAML.dump({
               'development'=>{
                 'bar' => 'file_bar',
-                'baz' => 'file_buz'
+                'baz' => 'file_baz'
               }
             }, 
             f)

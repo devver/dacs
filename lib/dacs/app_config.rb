@@ -109,8 +109,11 @@ module Dacs
       defaults_source = DefaultSource.new(@defaults)
       file_source     = FileSource.new(config_path, @environment)
       env_source      = EnvironmentSource.new(env_var_prefix)
-
-      load_values!(self.class.schema, env_source, file_source, defaults_source)
+      sources         = []
+      sources    << env_source
+      sources    << file_source if file_source.readable?
+      sources    << defaults_source
+      load_values!(self.class.schema, *sources)
       verify_no_missing_required_values!
     end
 
@@ -124,7 +127,8 @@ module Dacs
 
     def source(key)
       assert_key_defined!(key)
-      configured_value.source.to_s
+      # TODO is there a simpler way?
+      Hash.instance_method(:[]).bind(self.class.instance).call(key).source.to_s
     end
 
     def [](key)
@@ -204,6 +208,16 @@ module Dacs
       end
       logger.info "Starter config file created at #{config_path}. " +
         "Please customize it to your needs."
+    rescue SystemCallError => error
+      # NOTE It is important to catch system call errors here, rather than using
+      # path.writable? checks. Read-only filesystems report files as having the
+      # "write" bit set even though writing isn't actually
+      # permitted. E.g. the filesystem used on Heroku. The first we'll find out
+      # that it's a read-only filesystem is when we try to write to it.
+      logger.info <<"END"
+Unable to write starter config file to #{path}. The error was:
+  '#{error.message}'
+END
     end
 
     def starter_config_content
