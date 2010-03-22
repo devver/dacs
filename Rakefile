@@ -10,7 +10,7 @@ begin
     gem.email = "devs@devver.net"
     gem.homepage = "http://github.com/avdi/dacs"
     gem.authors = ["Devver, Inc."]
-    gem.add_dependency "ruport", "~> 1.6"
+    gem.add_dependency "hirb", "~> 0.2.9"
     gem.add_development_dependency "rspec", ">= 1.2.9"
     gem.add_development_dependency "yard", ">= 0"
     gem.add_development_dependency "devver-construct", "~> 1.1"

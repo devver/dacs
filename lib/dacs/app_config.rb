@@ -3,7 +3,7 @@ require 'singleton'
 require 'logger'
 require 'pathname'
 require 'yaml'
-require 'ruport'
+require 'hirb'
 
 module Dacs
   # This configuration system is for deployment-specific values, such as AWS keys
@@ -145,11 +145,15 @@ module Dacs
     end
 
     def dump
-      table = Table(%w[Key Value Source])
-      each_pair do |key, configured_value|
-        table << [key, configured_value.value, configured_value.source.to_s]
-      end
-      table.as(:text)
+      Hirb::Helpers::AutoTable.render(
+        self.values,
+        :fields => [:key, :value, :source],
+        :headers => {
+          :key    => "Key",
+          :value  => "Value",
+          :source => "Source"
+        },
+        :description => false) + "\n"
     end
 
     def report

@@ -237,13 +237,13 @@ module Dacs
 
       it "should be able to show a table of values" do
         AppConfig.dump.should == <<END
-+------------------------------------------+
-| Key |  Value   |         Source          |
-+------------------------------------------+
-| foo |       42 | defaults                |
++-----+----------+-------------------------+
+| Key | Value    | Source                  |
++-----+----------+-------------------------+
+| foo | 42       | defaults                |
 | buz | env_buz  | environment             |
 | bar | file_bar | file config/foo_app.yml |
-+------------------------------------------+
++-----+----------+-------------------------+
 END
       end
       
