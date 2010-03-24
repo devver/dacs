@@ -199,6 +199,36 @@ module Dacs
       end
     end
 
+    context "with values set from a file + values merged in" do
+      before :each do
+        @construct.file("config/foo_app.yml") do |f|
+          YAML.dump({
+              'development'=>{
+                'bar' => 'file_bar',
+                'baz' => 'file_baz'
+              }
+            }, 
+            f)
+        end
+        AppConfig.init!(@app_name, :logger => @logger) do |config|
+          config.key 'bar', :default => "baz"
+          config.key 'baz', :default => "ribbit"
+          config.key 'buz', :default => "moo"
+        end
+        AppConfig.merge!(:baz => 'merge_baz', 'buz' => 'merge_buz')
+      end
+
+      it "should contain the merged values" do
+        AppConfig['baz'].should == "merge_baz"
+        AppConfig['buz'].should == "merge_buz"
+      end
+
+      it "should know the merged values were set explicitly in code" do
+        AppConfig.source('baz').should =~ /code/i
+        AppConfig.source('buz').should =~ /code/i
+      end
+    end
+
     context "with a mix of default, file, and environment settings" do
       before :each do
         @construct.file("config/foo_app.yml") do |f|

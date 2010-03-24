@@ -7,4 +7,6 @@ require 'dacs/environment_source'
 require 'dacs/file_source'
 require 'dacs/default_source'
 require 'dacs/environment_source'
+require 'dacs/code_source'
 require 'dacs/app_config'
+

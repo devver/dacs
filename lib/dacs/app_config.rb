@@ -144,6 +144,19 @@ module Dacs
       end
     end
 
+    def merge(new_values)
+      self.clone.merge!(new_values)
+    end
+
+    def merge!(new_values)
+      new_values.each_pair do |k,v|
+        self[k.to_s] = ConfiguredValue.new(
+          CodeSource.new,
+          k.to_s,
+          v)
+      end
+    end
+
     def dump
       Hirb::Helpers::AutoTable.render(
         self.values,
